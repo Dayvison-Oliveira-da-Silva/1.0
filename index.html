@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="css/main.css">
     <link rel="stylesheet" href="css/produtos.css">
     <style>
+        /* Seu CSS aqui... igual o que já está no seu exemplo */
         header {
             background: #fff;
             box-shadow: 0 2px 8px rgba(50, 80, 50, .08);
@@ -133,9 +134,8 @@
             <!-- Categorias aqui via JS -->
         </nav>
     </header>
-    <main>
+    <main></main>
 
-    </main>
     <nav class="navigation" aria-label="Navegação principal">
         <ul>
             <li class="list active">
@@ -190,12 +190,13 @@
 
         nav.style.setProperty('--items', items.length);
 
+        // Sempre informe o campo js: null se não usar
         const routes = [
-            { hash: '#marcas', file: 'main/marcas.html' },
-            { hash: '#produtos', file: 'main/produtos.html' },
-            { hash: '#carrinho', file: 'main/carrinho.html' },
-            { hash: '#propostas', file: 'main/propostas.html' },
-            { hash: '#pedidos', file: 'main/pedidos.html' }
+            { hash: '#marcas', file: 'main/marcas.html', js: null },
+            { hash: '#produtos', file: 'main/produtos.html', js: 'main/produtos.js' },
+            { hash: '#carrinho', file: 'main/carrinho.html', js: null },
+            { hash: '#propostas', file: 'main/propostas.html', js: null },
+            { hash: '#pedidos', file: 'main/pedidos.html', js: null }
         ];
 
         function setActive(index) {
@@ -203,15 +204,26 @@
             items[index].classList.add('active');
             nav.style.setProperty('--i', index);
 
-            // Troca o conteúdo do main
             fetch(routes[index].file)
                 .then(res => res.text())
                 .then(html => {
-                    // Pega só o conteúdo do <main> do arquivo carregado
                     const temp = document.createElement('div');
                     temp.innerHTML = html;
                     const novoMain = temp.querySelector('main');
                     if (novoMain) main.innerHTML = novoMain.innerHTML;
+
+                    // Remove script antigo se houver
+                    const oldScript = document.getElementById('spa-script');
+                    if (oldScript) oldScript.remove();
+
+                    // Se tiver JS externo, carrega dinamicamente
+                    if (routes[index].js) {
+                        const s = document.createElement('script');
+                        s.src = routes[index].js;
+                        s.id = 'spa-script';
+                        s.type = "module"; // Use "module" só se realmente usar import/export
+                        document.body.appendChild(s);
+                    }
                 });
         }
 
@@ -228,13 +240,13 @@
         window.addEventListener('hashchange', navigateByHash);
         navigateByHash();
     </script>
+
     <script>
         // 1. Carregar o JSON dos clientes
         let clientes = [];
         fetch('clientes_com_categorias.json')
             .then(res => res.json())
             .then(data => {
-                // O JSON é: { "Cliente Nome": {categorias: [...], ...}, ... }
                 clientes = Object.keys(data).map(nome => ({
                     id: nome,
                     nome: nome,
@@ -257,7 +269,6 @@
                 clienteSelect.addEventListener('change', e => {
                     localStorage.setItem('cliente_selecionado', e.target.value);
                     // Você pode disparar lógica extra aqui (ex: filtrar categorias do cliente)
-                    // window.location.reload();
                 });
             });
 
@@ -296,7 +307,6 @@
 
         // 5. Função para mostrar os produtos da categoria (simples exemplo)
         function mostrarProdutosDaCategoria(cat) {
-            // Aqui você pode trocar pelo seu sistema de cards de produto
             const main = document.querySelector('main');
             main.innerHTML = '';
             if (!categoriasJSON[cat]) {
@@ -311,7 +321,6 @@
         document.getElementById('btn-pesquisa').onclick = () => {
             const termo = document.getElementById('search').value.trim().toLowerCase();
             if (!termo) return;
-            // Busca por produto ou marca em todas as categorias
             const resultados = [];
             for (const cat in categoriasJSON) {
                 categoriasJSON[cat].forEach(nome => {
@@ -320,7 +329,6 @@
                     }
                 });
             }
-            // Exibe resultado no <main>
             const main = document.querySelector('main');
             if (resultados.length === 0) {
                 main.innerHTML = `<p>Nenhum resultado para <b>${termo}</b>.</p>`;
@@ -330,6 +338,5 @@
             }
         };
     </script>
-    <script src="main/produto.js"></script>
 </body>
 </html>
